@@ -1,11 +1,10 @@
 export const books = [
   {
-    "id": 0,
+    id: 1,
 
-    "title": "How to give your worn-out sneakers a second life",
+    title: "How to give your worn-out sneakers a second life",
 
-    "text":
-      `Shoes take a beating. They get wet, dirty and scuffed. Soles wear down. Laces break.
+    text: `Shoes take a beating. They get wet, dirty and scuffed. Soles wear down. Laces break.
 
       Kids outgrow their shoes pretty quickly, too.
 
@@ -63,14 +62,13 @@ export const books = [
       “It’s easy for an individual to feel they’re not making a difference by their one pair of sneakers that they’re going to just put out with the garbage on Monday,” Pearson said. But “the more of us who do that, the bigger impact it is.”`,
   },
 
-
   {
-    "id": 1,
+    id: 2,
 
-    "title": "Analysis: Shohei Ohtani sets new record with 50 home runs, 50 stolen bases in one season",
+    title:
+      "Analysis: Shohei Ohtani sets new record with 50 home runs, 50 stolen bases in one season",
 
-    "text":
-      `MIAMI, Florida — Shohei Ohtani looked up at the boisterous crowd that turned out to cheer him and the Los Angeles Dodgers — and entertained each and every spectator with one of the greatest individual performances and seasons in major league history.
+    text: `MIAMI, Florida — Shohei Ohtani looked up at the boisterous crowd that turned out to cheer him and the Los Angeles Dodgers — and entertained each and every spectator with one of the greatest individual performances and seasons in major league history.
 
       Fans lifted their phones to capture the moment and chanted “M-V-P!” as Ohtani rounded the bases after he cleared the fence for the 50th time, becoming the first major league player with at least 50 home runs and 50 stolen bases in a season.
 
@@ -142,5 +140,5 @@ export const books = [
       Another potential first could be earning National League MVP honors as a designated hitter. No player who got most of his playing time as a DH — without pitching — has ever won MVP, although Don Baylor, Edgar Martinez and David Ortiz placed high in the vote.
 
       It would be Ohtani’s third career MVP award.`,
-  }
-]
+  },
+];
