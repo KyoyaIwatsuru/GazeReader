@@ -22,7 +22,11 @@ import { assignments } from "@/app/constants/assignments/data";
 import { useReading } from "@/app/reading/reading-context";
 import { TaskForm, TaskSubmission } from "./task-form";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  textId: number;
+}
+
+export function AppSidebar({ textId }: AppSidebarProps) {
   const [submissions, setSubmissions] = useState<{
     [taskId: number]: TaskSubmission;
   }>({});
@@ -35,12 +39,19 @@ export function AppSidebar() {
     }));
     console.log("Task submitted:", submissions);
 
-    const targetTask = assignments[0].tasks.find((t) => t.id === taskId);
+    const assignmentData = assignments.find((a) => a.text_id === textId);
+    const targetTask = assignmentData?.tasks.find((t) => t.id === taskId);
     if (targetTask) {
       addKeywords(targetTask.keywords); 
       console.log("Added keywords:", targetTask.keywords);
     }
   };
+
+  const assignmentData = assignments.find((a) => a.text_id === textId);
+
+  if (!assignmentData) {
+    return null;
+  }
 
   return (
     <Sidebar side="right" variant="floating">
@@ -49,7 +60,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Assignment</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {assignments[0].tasks.map((task) => (
+              {assignmentData.tasks.map((task) => (
                 <Collapsible key={task.id} className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
