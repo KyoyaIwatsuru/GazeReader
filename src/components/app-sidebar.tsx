@@ -32,6 +32,12 @@ export function AppSidebar({ textId }: AppSidebarProps) {
   }>({});
   const { addKeywords } = useReading();
 
+  const assignmentData = assignments.find((a) => a.text_id === textId);
+
+  if (!assignmentData) {
+    return null;
+  }
+
   const handleTaskSubmit = (taskId: number, submission: TaskSubmission) => {
     setSubmissions((prev) => ({
       ...prev,
@@ -39,19 +45,12 @@ export function AppSidebar({ textId }: AppSidebarProps) {
     }));
     console.log("Task submitted:", submissions);
 
-    const assignmentData = assignments.find((a) => a.text_id === textId);
     const targetTask = assignmentData?.tasks.find((t) => t.id === taskId);
     if (targetTask) {
       addKeywords(targetTask.keywords); 
       console.log("Added keywords:", targetTask.keywords);
     }
   };
-
-  const assignmentData = assignments.find((a) => a.text_id === textId);
-
-  if (!assignmentData) {
-    return null;
-  }
 
   return (
     <Sidebar side="right" variant="floating">
