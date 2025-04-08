@@ -21,10 +21,8 @@ import {
 import { assignments } from "@/app/constants/assignments/data";
 import { useReading } from "@/app/reading/reading-context";
 import { TaskForm, TaskSubmission } from "./task-form";
-
-interface AppSidebarProps {
-  textId: number;
-}
+import NextButton from "./next-button";
+import { AppSidebarProps } from "@/types/index";
 
 export function AppSidebar({ textId }: AppSidebarProps) {
   const [submissions, setSubmissions] = useState<{
@@ -51,6 +49,10 @@ export function AppSidebar({ textId }: AppSidebarProps) {
       console.log("Added keywords:", targetTask.keywords);
     }
   };
+
+  const allTasksSubmitted = assignmentData.tasks.every(
+    (task) => submissions[task.id]?.submitted
+  );
 
   return (
     <Sidebar side="right" variant="floating">
@@ -81,6 +83,9 @@ export function AppSidebar({ textId }: AppSidebarProps) {
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <NextButton textId={textId} disabled={!allTasksSubmitted} />
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>

@@ -1,3 +1,6 @@
+"use client"
+
+import { use } from "react"
 import { TypographyH2 } from "@/components/typography/typography-h2"
 import { books } from "../../constants/texts/data"
 import { Text } from "@/components/text"
@@ -5,15 +8,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ReadingProvider } from "../reading-context";
 import { HomeButton } from "@/components/home-button"
-
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
+import { PageProps } from "@/types/index"
 
 export default function Page({ params }: PageProps) {
-  const bookId = parseInt(params.id, 10);
+  const bookId = parseInt(use(params).id, 10);
   const book = books.find((b) => b.id === bookId);
 
   if (!book) {
@@ -29,7 +27,7 @@ export default function Page({ params }: PageProps) {
       <ReadingProvider>
         <SidebarProvider defaultOpen={false}>
           <div className="flex flex-col w-full">
-            <header className="flex h-16 items-center border-b px-4">
+            <header className="sticky top-0 z-10 flex h-16 items-center border-b px-4 bg-secondary-background">
               <HomeButton />
               <SidebarTrigger className="ml-auto" />
             </header>
