@@ -1,12 +1,50 @@
 {
   "name": "gaze-reader",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
+  "main": ".electron/main.js",
+  "description": "An app to read and analyze gaze data",
+  "author": "Kyoya Iwatsuru <kyoyaiwatsuru@gmail.com>",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev:next": "next dev --turbopack",
+    "build:next": "next build",
+    "start:next": "next start",
+    "lint": "next lint",
+    "build:electron": "tsc --project tsconfig.electron.json",
+    "dev:electron": "npm run build:electron && electron . dev",
+    "start:electron": "npm run build:next && npm run build:electron && electron .",
+    "kill": "lsof -t -i:3000 | xargs kill -9",
+    "dist": "npm run build:next && npm run build:electron && cp package.json server-package.json && electron-builder && rm server-package.json"
+  },
+  "build": {
+    "appId": "com.gaze.reader",
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "node_modules",
+        "to": "external/node_modules"
+      },
+      {
+        "from": ".next",
+        "to": "external/.next"
+      },
+      {
+        "from": "server-package.json",
+        "to": "external/package.json"
+      },
+      {
+        "from": "/Users/kyoya/.asdf/installs/nodejs/22.14.0/bin/node",
+        "to": "external/node"
+      }
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -36,8 +74,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^35.1.4",
+    "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "npm": "^11.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

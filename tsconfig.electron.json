@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "outDir": "./.electron",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "allowJs": true,
+    "moduleResolution": "node",
+    "jsx": "react"
+  },
+  "include": ["src/electron/**/*"],
+  "exclude": ["node_modules"]
+}
