@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "path";
 import { spawn, ChildProcess } from "child_process";
 import fs from "fs";
@@ -21,7 +21,7 @@ function getPreloadPath(): string {
   if (app.isPackaged) {
     return path.join(app.getAppPath(), ".electron", "preload.js");
   } else {
-    return path.join(path.resolve(), "preload.js");
+    return path.join(process.cwd(), ".electron", "preload.js");
   }
 }
 
@@ -29,17 +29,30 @@ async function startNextServer(isDev: boolean) {
   try {
     const script = isDev ? "dev:next" : "start:next";
     const cwd = getCwdForNextServer();
-    const nodePath = path.join(process.resourcesPath, 'external', 'node');
-    const npmPath = path.join(cwd, "node_modules", ".bin", "npm");
+    const baseEnv = { ...process.env };
+    let execPath: string;
+    let args: string[];
+    let env: NodeJS.ProcessEnv;
 
-    nextServer = spawn(nodePath, [npmPath, "run", script], {
+    if (app.isPackaged) {
+      execPath = path.join(process.resourcesPath, "external", "node");
+      const bundledNpm = path.join(cwd, "node_modules", ".bin", "npm");
+      args = [bundledNpm, "run", script];
+      env = {
+        ...baseEnv,
+        PATH: `${baseEnv.PATH}:${path.join(process.resourcesPath, "external")}`,
+      };
+    } else {
+      execPath = "npm";
+      args = ["run", script];
+      env = baseEnv;
+    }
+
+    nextServer = spawn(execPath, args, {
       cwd,
-      shell: true,
+      shell: !!app.isPackaged,
       stdio: ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        PATH: `${process.env.PATH}:${path.join(process.resourcesPath, 'external')}`
-      },
+      env,
     });
 
     nextServer.stdout?.on("data", (data) => {
@@ -78,13 +91,16 @@ async function startNextServer(isDev: boolean) {
 
 async function createWindow() {
   try {
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     win = new BrowserWindow({
-      width: 1280,
-      height: 800,
+      width,
+      height,
       webPreferences: {
-        contextIsolation: false,
+        nodeIntegration: false,
+        contextIsolation: true,
         preload: getPreloadPath(),
       },
+      kiosk: true,
     });
 
     win.loadURL("http://localhost:3000");
@@ -129,4 +145,23 @@ app.on("window-all-closed", () => {
 
 app.on("quit", () => {
   shutdownNextServer();
+});
+
+ipcMain.handle('save-csv', async (_, filename: string, rows: string[][]) => {
+  try {
+    const filePath = path.join(app.getPath('documents'), filename);
+
+    const csvText = rows.map(r => r.map(v => `"${v.replace(/"/g,'""')}"`).join(',')).join('\n') + '\n';
+
+    if (!fs.existsSync(filePath)) {
+      await fs.promises.writeFile(filePath, csvText, 'utf8');
+    } else {
+      await fs.promises.appendFile(filePath, csvText, 'utf8');
+    }
+
+    return { success: true, filePath };
+  } catch (err) {
+    console.error('CSV save error:', err);
+    return { success: false, error: (err as Error).message };
+  }
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +31,13 @@ export function AppSidebar({ textId }: AppSidebarProps) {
   const { addKeywords } = useReading();
 
   const assignmentData = assignments.find((a) => a.text_id === textId);
+
+  useEffect(() => {
+    localStorage.setItem(
+      `submissions_text${textId}`,
+      JSON.stringify(submissions)
+    );
+  }, [submissions, textId]);
 
   if (!assignmentData) {
     return null;

@@ -1,7 +1,6 @@
 {
   "name": "gaze-reader",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "main": ".electron/main.js",
   "description": "An app to read and analyze gaze data",
