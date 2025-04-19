@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,6 +35,19 @@ const taskFormSchema = z.object({
 });
 
 export function TaskForm({ task, submission, onTaskSubmit }: TaskFormProps) {
+  useEffect(() => {
+    if (submission?.submitted) {
+      const timer = setTimeout(() => {
+        fetch("http://localhost:8765/recording/capture")
+          .then(() => {
+            console.log("Capture successful");
+          })
+          .catch((e) => console.error("Capture failed after explanation visible:", e));
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [submission?.submitted]);
+
   const form = useForm({
     resolver: zodResolver(taskFormSchema),
     defaultValues: { answer: submission?.userAnswer || "" },

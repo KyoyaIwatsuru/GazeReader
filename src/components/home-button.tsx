@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +17,33 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export function HomeButton() {
+  const router = useRouter();
+  const [stopError, setStopError] = useState<string | null>(null);
+
+  const handleStop = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setStopError(null);
+
+    try {
+      await fetch("http://localhost:8765/recording/capture");
+    } catch (err) {
+      console.error("Capture failed before stop:", err);
+    }
+
+    try {
+      const res = await fetch("http://localhost:8765/recording/stop");
+      const data = (await res.json()) as { response: string };
+      if (data.response !== "succeeded") {
+        throw new Error(data.response);
+      }
+      router.push("/");
+    } catch (e: unknown) {
+      console.error("Failed to stop recording:", e);
+      const message = e instanceof Error ? e.message : String(e);
+      setStopError(`Recording stop failed: ${message}`);
+    }
+  };
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -29,11 +60,20 @@ export function HomeButton() {
         <AlertDialogFooter>
           <AlertDialogCancel>No</AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Link href="/" passHref>
+            <Link
+              href="/"
+              onClick={handleStop}
+              className="px-4 py-2 bg-primary text-white rounded"
+            >
               Yes
             </Link>
           </AlertDialogAction>
         </AlertDialogFooter>
+        {stopError && (
+          <div className="mt-2 text-sm text-destructive">
+            {stopError}
+          </div>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   )

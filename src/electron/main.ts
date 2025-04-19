@@ -1,13 +1,50 @@
+import os from "os";
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "path";
 import { spawn, ChildProcess } from "child_process";
 import fs from "fs";
+import net from "net";
 
 let win: BrowserWindow | null = null;
 let nextServer: ChildProcess | null = null;
 
 const logFile = path.join(app.getPath("userData"), "next-server.log");
-const logStream = fs.createWriteStream(logFile, { flags: "a" });
+const logStream = fs.createWriteStream(logFile, { flags: "a", encoding: "utf8" });
+
+function waitForPort(
+  port: number,
+  host = "localhost",
+  timeoutMs = 10000
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    (function check() {
+      const socket = new net.Socket();
+      socket.setTimeout(1000);
+      socket.once("error", () => {
+        socket.destroy();
+        if (Date.now() - start > timeoutMs) {
+          reject(new Error(`Timeout waiting for port ${port}`));
+        } else {
+          setTimeout(check, 200);
+        }
+      });
+      socket.once("timeout", () => {
+        socket.destroy();
+        if (Date.now() - start > timeoutMs) {
+          reject(new Error(`Timeout waiting for port ${port}`));
+        } else {
+          setTimeout(check, 200);
+        }
+      });
+      socket.once("connect", () => {
+        socket.destroy();
+        resolve();
+      });
+      socket.connect(port, host);
+    })();
+  });
+}
 
 function getCwdForNextServer(): string {
   if (app.isPackaged) {
@@ -30,12 +67,18 @@ async function startNextServer(isDev: boolean) {
     const script = isDev ? "dev:next" : "start:next";
     const cwd = getCwdForNextServer();
     const baseEnv = { ...process.env };
+    const isWin = os.platform() === "win32";
+
     let execPath: string;
     let args: string[];
     let env: NodeJS.ProcessEnv;
 
     if (app.isPackaged) {
-      execPath = path.join(process.resourcesPath, "external", "node");
+      execPath = path.join(
+        process.resourcesPath,
+        "external",
+        isWin ? "node.exe" : "node"
+      );
       const bundledNpm = path.join(cwd, "node_modules", ".bin", "npm");
       args = [bundledNpm, "run", script];
       env = {
@@ -100,7 +143,7 @@ async function createWindow() {
         contextIsolation: true,
         preload: getPreloadPath(),
       },
-      kiosk: true,
+      // kiosk: true,
     });
 
     win.loadURL("http://localhost:3000");
@@ -111,7 +154,7 @@ async function createWindow() {
   } catch (error) {
     console.error("Error during window creation:", error);
     logStream.write(`Error during window creation: ${error}\n`);
-    logStream.end();
+    app.quit();
   }
 }
 
@@ -123,13 +166,17 @@ function shutdownNextServer() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   const isDev = process.argv.includes("dev");
   startNextServer(isDev);
 
-  setTimeout(async () => {
+  try {
+    await waitForPort(3000, "localhost", 15000);
     await createWindow();
-  }, 3000);
+  } catch (err) {
+    console.error("Next.js server did not start in time:", err);
+    app.quit();
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

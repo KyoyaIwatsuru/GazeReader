@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,6 +37,21 @@ export default function EvaluationPage({ params }: PageProps) {
   const evaluationData = evaluations.find((e) => e.text_id === textId)!;
   const [submitted, setSubmitted] = useState(false);
 
+  useEffect(() => {
+    localStorage.setItem(`timestamp_evaluation_${textId}`, Date.now().toString());
+    fetch("http://localhost:8765/recording/capture")
+      .then((res) => res.json())
+      .catch((e) => console.error("Capture failed on evaluation mount:", e));
+  }, [textId]);
+
+  useEffect(() => {
+    if (submitted) {
+      fetch("http://localhost:8765/recording/capture")
+        .then((res) => res.json())
+        .catch((e) => console.error("Capture failed after evaluation submit:", e));
+    }
+  }, [submitted]);
+
   const form = useForm<EvaluationFormValues>({
     resolver: zodResolver(evaluationSchema),
     defaultValues: {
@@ -58,11 +73,32 @@ export default function EvaluationPage({ params }: PageProps) {
   }
 
   const onSubmit = async (data: EvaluationFormValues) => {
-    localStorage.setItem(`evaluation_text${textId}`, JSON.stringify(data));
+    const tsFinished = Date.now().toString()
+
+    const tsReading = localStorage.getItem(`timestamp_reading_${textId}`) ?? "";
+    const tsEval = localStorage.getItem(`timestamp_evaluation_${textId}`) ?? "";
+
+    const questionTimes = assignmentData.tasks.flatMap((t) => {
+      const ts = localStorage.getItem(`timestamp_question_${textId}_${t.id}`) || "";
+      return [ts];
+    });
+    const explanationTimes = assignmentData.tasks.flatMap((t) => {
+      const ts = localStorage.getItem(`timestamp_explanation_${textId}_${t.id}`) || "";
+      return [ts];
+    });
 
     const taskHeaders = assignmentData.tasks.flatMap(t => [`task_${t.id}`, `task_answer_${t.id}`]);
     const evalHeaders = evaluationData.answers.map((_, i) => [`evaluation_${i+1}`, `evaluation_answer_${i+1}`]).flat();
-    const headers = ["text_id", ...taskHeaders, ...evalHeaders];
+    const headers = [
+      "text_id",
+      "timestamp_reading",
+      ...assignmentData.tasks.map((t) => `question_${t.id}`),
+      ...assignmentData.tasks.map((t) => `explanation_${t.id}`),
+      "timestamp_evaluation",
+      "timestamp_finish",
+      ...taskHeaders,
+      ...evalHeaders,
+    ];
 
     const stored = localStorage.getItem(`submissions_text${textId}`);
     const taskSubmissions: { [key: number]: { userAnswer: string } } = stored ? JSON.parse(stored) : {};
@@ -78,9 +114,34 @@ export default function EvaluationPage({ params }: PageProps) {
       return [ans, ok];
     }).flat();
 
-    const rows = [headers, [String(textId), ...taskValues, ...evalValues]];
+    const rows = [
+      headers,
+      [
+        String(textId),
+        tsReading,
+        ...questionTimes,
+        ...explanationTimes,
+        tsEval,
+        tsFinished,
+        ...taskValues,
+        ...evalValues,
+      ],
+    ];
 
-    const result = await window.electronAPI.saveCsv("answers.csv", rows);
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const timestamp = [
+      now.getFullYear(),
+      pad(now.getMonth() + 1),
+      pad(now.getDate()),
+    ].join("") + "_" + [
+      pad(now.getHours()),
+      pad(now.getMinutes()),
+      pad(now.getSeconds()),
+    ].join("");
+    const filename = `answers_${timestamp}.csv`;
+
+    const result = await window.electronAPI.saveCsv(filename, rows);
     if (!result.success) {
       console.error("CSV save failed:", result.error);
     }

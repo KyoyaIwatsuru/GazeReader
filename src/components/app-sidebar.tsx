@@ -28,6 +28,8 @@ export function AppSidebar({ textId }: AppSidebarProps) {
   const [submissions, setSubmissions] = useState<{
     [taskId: number]: TaskSubmission;
   }>({});
+  const [openTaskId, setOpenTaskId] = useState<number | null>(null);
+  const [capturedQuestions, setCapturedQuestions] = useState<number[]>([]);
   const { addKeywords } = useReading();
 
   const assignmentData = assignments.find((a) => a.text_id === textId);
@@ -48,13 +50,13 @@ export function AppSidebar({ textId }: AppSidebarProps) {
       ...prev,
       [taskId]: submission,
     }));
-    console.log("Task submitted:", submissions);
 
     const targetTask = assignmentData?.tasks.find((t) => t.id === taskId);
     if (targetTask) {
       addKeywords(targetTask.keywords); 
-      console.log("Added keywords:", targetTask.keywords);
     }
+
+    localStorage.setItem(`timestamp_explanation_${textId}_${taskId}`, Date.now().toString());
   };
 
   const allTasksSubmitted = assignmentData.tasks.every(
@@ -69,7 +71,28 @@ export function AppSidebar({ textId }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               {assignmentData.tasks.map((task) => (
-                <Collapsible key={task.id} className="group/collapsible">
+                <Collapsible
+                  key={task.id}
+                  open={openTaskId === task.id}
+                  onOpenChange={(open) => {
+                    setOpenTaskId(open ? task.id : null);
+
+                    if (open && !capturedQuestions.includes(task.id)) {
+                      setTimeout(() => {
+                        fetch("http://localhost:8765/recording/capture")
+                          .then(() => {
+                            setCapturedQuestions((prev) => [...prev, task.id]);
+                          })
+                          .catch((e) =>
+                            console.error("Capture failed on question open:", e)
+                        );
+                      }, 500);
+
+                      localStorage.setItem(`timestamp_question_${textId}_${task.id}`, Date.now().toString());
+                    }
+                  }}
+                  className="group/collapsible"
+                >
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton className="font-medium">

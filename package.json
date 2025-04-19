@@ -13,19 +13,12 @@
     "build:electron": "tsc --project tsconfig.electron.json",
     "dev:electron": "npm run build:electron && electron . dev",
     "start:electron": "npm run build:next && npm run build:electron && electron .",
-    "kill": "lsof -t -i:3000 | xargs kill -9",
+    "kill:mac": "lsof -t -i:3000 | xargs kill -9",
+    "kill:win": "npx kill-port 3000",
     "dist": "npm run build:next && npm run build:electron && cp package.json server-package.json && electron-builder && rm server-package.json"
   },
   "build": {
     "appId": "com.gaze.reader",
-    "mac": {
-      "target": "dmg",
-      "icon": "build/icon.icns"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico"
-    },
     "extraResources": [
       {
         "from": "node_modules",
@@ -38,12 +31,28 @@
       {
         "from": "server-package.json",
         "to": "external/package.json"
-      },
-      {
-        "from": "/Users/kyoya/.asdf/installs/nodejs/22.14.0/bin/node",
-        "to": "external/node"
       }
-    ]
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns",
+      "extraResources": [
+        {
+          "from": "/Users/kyoya/.asdf/installs/nodejs/22.14.0/bin/node",
+          "to": "external/node"
+        }
+      ]
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "extraResources": [
+        {
+          "from": "C:\\Program Files\\Volta\\node.exe",
+          "to": "external/node.exe"
+        }
+      ]
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -55,6 +64,7 @@
     "@radix-ui/react-radio-group": "^1.2.3",
     "@radix-ui/react-separator": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-switch": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -80,5 +90,8 @@
     "npm": "^11.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "volta": {
+    "node": "22.14.0"
   }
 }
