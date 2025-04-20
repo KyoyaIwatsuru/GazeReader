@@ -66,7 +66,7 @@ export default function EvaluationPage({ params }: PageProps) {
 
   if (!evaluationData) {
     return (
-      <main className="container mx-auto p-8">
+      <main className="flex items-center justify-center h-full">
         <TypographyH2 className="text-center">Text not found</TypographyH2>
       </main>
     );
@@ -149,16 +149,15 @@ export default function EvaluationPage({ params }: PageProps) {
   };
 
   return (
-    <main className="container mx-auto p-8">
-      <TypographyH2 className="text-center">穴埋め問題</TypographyH2>
-      <div className="p-8">
+    <main className="h-full container mx-auto p-8">
+      <div className="px-8 pb-8">
         <TypographyP className="whitespace-pre-line">
           {evaluationData.question}
         </TypographyP>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
           {["blank1", "blank2", "blank3", "blank4", "blank5", "blank6"].map(
             (fieldName, index) => (
               <FormField
@@ -169,7 +168,7 @@ export default function EvaluationPage({ params }: PageProps) {
                   <FormItem>
                     <FormLabel>{`空欄 (${index + 1})`}</FormLabel>
                     <FormControl>
-                      <select {...field} className="w-full p-2 border rounded">
+                      <select {...field} className="w-full p-1 border rounded">
                         <option value="">-- 選択してください --</option>
                         {evaluationData.choices.map((choice) => (
                           <option key={choice.id} value={String(choice.id)}>
@@ -196,7 +195,7 @@ export default function EvaluationPage({ params }: PageProps) {
 
       {submitted && (
         <div className="flex flex-col items-center">
-          <div className="w-full my-4 p-4 border rounded bg-completed">
+          <div className="w-full my-4 p-2 border rounded bg-completed">
             <TypographyP className="text-center">送信が完了しました。</TypographyP>
           </div>
           <LastButton />

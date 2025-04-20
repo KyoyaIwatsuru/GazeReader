@@ -112,7 +112,7 @@ export function TaskForm({ task, submission, onTaskSubmit }: TaskFormProps) {
           <TypographyH4 className="mt-4">
             {`<Answer>`}
             <span
-              className={`ml-4 font-semibold ${
+              className={`ml-4 ${
                 submission.userAnswer === String(task.answer)
                   ? "text-correct"
                   : "text-incorrect"

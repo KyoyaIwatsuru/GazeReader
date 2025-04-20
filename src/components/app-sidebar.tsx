@@ -30,7 +30,7 @@ export function AppSidebar({ textId }: AppSidebarProps) {
   }>({});
   const [openTaskId, setOpenTaskId] = useState<number | null>(null);
   const [capturedQuestions, setCapturedQuestions] = useState<number[]>([]);
-  const { addKeywords } = useReading();
+  const { addKeywords, dynamicTaskIds, allRead } = useReading();
 
   const assignmentData = assignments.find((a) => a.text_id === textId);
 
@@ -44,6 +44,10 @@ export function AppSidebar({ textId }: AppSidebarProps) {
   if (!assignmentData) {
     return null;
   }
+
+  const tasksToShow = assignmentData.tasks.filter((t) =>
+    dynamicTaskIds.includes(t.id)
+  );
 
   const handleTaskSubmit = (taskId: number, submission: TaskSubmission) => {
     setSubmissions((prev) => ({
@@ -59,7 +63,7 @@ export function AppSidebar({ textId }: AppSidebarProps) {
     localStorage.setItem(`timestamp_explanation_${textId}_${taskId}`, Date.now().toString());
   };
 
-  const allTasksSubmitted = assignmentData.tasks.every(
+  const allTasksSubmitted = tasksToShow.every(
     (task) => submissions[task.id]?.submitted
   );
 
@@ -70,7 +74,7 @@ export function AppSidebar({ textId }: AppSidebarProps) {
           <SidebarGroupLabel>Assignment</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {assignmentData.tasks.map((task) => (
+              {tasksToShow.map((task) => (
                 <Collapsible
                   key={task.id}
                   open={openTaskId === task.id}
@@ -115,7 +119,12 @@ export function AppSidebar({ textId }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <NextButton textId={textId} disabled={!allTasksSubmitted} />
+          <NextButton textId={textId} disabled={!(allRead && allTasksSubmitted)} />
+          {!allRead && (
+          <p className="text-center mt-2 text-sm text-muted-foreground">
+            全ての文章を読んでください。
+          </p>
+        )}
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>

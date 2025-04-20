@@ -39,7 +39,7 @@ export default function NextButton({ textId, disabled }: NextButtonProps) {
         <AlertDialogFooter>
           <AlertDialogCancel>No</AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Link href={`/evaluation/${textId}`} passHref>
+            <Link href={`/evaluation/${textId}`}>
               Yes
             </Link>
           </AlertDialogAction>
@@ -96,7 +96,6 @@ export function LastButton() {
             <Link
               href="/"
               onClick={handleStop}
-              className="px-4 py-2 bg-primary text-white rounded"
             >
               Yes
             </Link>

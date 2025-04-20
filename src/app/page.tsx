@@ -68,12 +68,12 @@ export default function Home() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:8765/recording/start");
-      const data = await res.json() as { response: string };
+      // const res = await fetch("http://localhost:8765/recording/start");
+      // const data = await res.json() as { response: string };
 
-      if (data.response !== "succeeded") {
-        throw new Error(data.response);
-      }
+      // if (data.response !== "succeeded") {
+      //   throw new Error(data.response);
+      // }
       router.push(`/reading/${id}`);
     } catch (e: unknown) {
       console.error("Failed to start recording:", e);
@@ -83,7 +83,7 @@ export default function Home() {
   };
 
   return (
-    <main className="container mx-auto p-8 space-y-8">
+    <main className="container h-full mx-auto p-8 space-y-8">
       <div className="flex items-center justify-between space-x-8">
         <div className="flex-1">
           {error && (
@@ -110,8 +110,8 @@ export default function Home() {
       </div>
 
 
-      <div className="space-y-4">
-        <TypographyH2 className="text-center mb-8">
+      <div className="space-y-8">
+        <TypographyH2 className="text-center">
           読む文章を選択してください
         </TypographyH2>
         <ul className="space-y-4">
