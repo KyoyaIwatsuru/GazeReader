@@ -68,12 +68,12 @@ export default function Home() {
       return;
     }
     try {
-      // const res = await fetch("http://localhost:8765/recording/start");
-      // const data = await res.json() as { response: string };
+      const res = await fetch("http://localhost:8765/recording/start");
+      const data = await res.json() as { response: string };
 
-      // if (data.response !== "succeeded") {
-      //   throw new Error(data.response);
-      // }
+      if (data.response !== "succeeded") {
+        throw new Error(data.response);
+      }
       router.push(`/reading/${id}`);
     } catch (e: unknown) {
       console.error("Failed to start recording:", e);

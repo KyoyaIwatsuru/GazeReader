@@ -53,7 +53,7 @@ export default function Page({ params }: PageProps) {
 
   return (
     <main className="h-full">
-      <ReadingProvider paragraphRefs={paragraphRefs}>
+      <ReadingProvider paragraphRefs={paragraphRefs} paragraphs={paragraphs}>
         <SidebarProvider defaultOpen={true}>
           <div className="flex flex-col">
             <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b px-4 bg-secondary-background">

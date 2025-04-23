@@ -1,11 +1,19 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 
 interface ReadingContextValue {
   highlightKeywords: string[];
   addKeywords: (words: string[]) => void;
   paragraphRefs: React.RefObject<HTMLDivElement | null>[];
+  paragraphs: string[];
   dynamicTaskIds: number[];
   addDynamicTask: (taskId: number) => void;
   allRead: boolean;
@@ -15,9 +23,11 @@ const ReadingContext = createContext<ReadingContextValue>(null!);
 
 export function ReadingProvider({
   paragraphRefs,
+  paragraphs,
   children,
 }: {
   paragraphRefs: React.RefObject<HTMLDivElement | null>[];
+  paragraphs: string[];
   children: React.ReactNode
 }) {
   const [highlightKeywords, setHighlightKeywords] = useState<string[]>([]);
@@ -33,11 +43,20 @@ export function ReadingProvider({
   };
 
   const durationsRef = useRef<Record<number, number>>({});
+  const prevXRef = useRef<Record<number, number>>({})
+  const regressionsRef = useRef<Record<number, number>>({})
+
+  const wordCounts = useMemo(
+    () => paragraphs.map(p => p.trim().split(/\s+/).length),
+    [paragraphs]
+  );
+
+  const MS_PER_WORD = 240
+  const TOLERANCE = 2
+  const REGRESSION_RATE_THRESHOLD = 0.2
 
   useEffect(() => {
-    const THRESHOLD = 3000;
     const socket = new WebSocket("ws://localhost:8765/tobii_pro/fixation");
-    const durations: Record<number, number> = {};
 
     socket.onopen = () => console.log("WebSocket opened");
     socket.onerror = (ev) => console.error("WebSocket error", ev);
@@ -60,18 +79,24 @@ export function ReadingProvider({
         const { top, left, right, bottom } = el.getBoundingClientRect();
 
         if (x >= left && x <= right && y >= top && y <= bottom) {
-          durations[idx] = (durations[idx] || 0) + fd;
-          if (durations[idx] >= 10_000) {
-            addDynamicTask(idx + 1);
+          durationsRef.current[idx] = (durationsRef.current[idx] || 0) + fd
+
+          const prevX = prevXRef.current[idx] ?? x
+          if (x < prevX) {
+            regressionsRef.current[idx] = (regressionsRef.current[idx] || 0) + 1
+          }
+          prevXRef.current[idx] = x
+
+          const threshold = wordCounts[idx] * MS_PER_WORD * TOLERANCE
+          const durationExceeded = durationsRef.current[idx] >= threshold
+          const regressionRate = (regressionsRef.current[idx] || 0) / wordCounts[idx]
+          if (durationExceeded || regressionRate >= REGRESSION_RATE_THRESHOLD) {
+            addDynamicTask(idx + 1)
           }
 
-          const prev = durationsRef.current[idx] || 0;
-          durationsRef.current[idx] = prev + fd;
-
-          const totalParagraphs = paragraphRefs.length;
-          const readCount = Object.values(durationsRef.current)
-            .filter((t) => t >= THRESHOLD).length;
-          if (!allRead && readCount === totalParagraphs) {
+          const allReadNow =
+            wordCounts.every((_, i) => durationsRef.current[i] >= MS_PER_WORD * TOLERANCE);
+          if (allReadNow && !allRead) {
             setAllRead(true);
           }
         }
@@ -79,7 +104,7 @@ export function ReadingProvider({
     };
 
     return () => socket.close();
-  }, [paragraphRefs, allRead]);
+  }, [paragraphRefs, wordCounts, allRead]);
 
   return (
     <ReadingContext.Provider
@@ -87,6 +112,7 @@ export function ReadingProvider({
         highlightKeywords,
         addKeywords,
         paragraphRefs,
+        paragraphs,
         dynamicTaskIds,
         addDynamicTask,
         allRead,
